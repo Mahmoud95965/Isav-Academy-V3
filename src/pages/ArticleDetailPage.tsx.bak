@@ -1,0 +1,267 @@
+import React from 'react';
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, Share2, Lock } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useRouter } from '../hooks/useRouter';
+import { useAuth } from '../contexts/AuthContext';
+import { articles } from '../data/mockData';
+
+const ArticleDetailPage: React.FC = () => {
+  const { currentLanguage, t } = useLanguage();
+  const { params, navigateTo } = useRouter();
+  const { currentUser } = useAuth();
+  const lang = currentLanguage.code;
+
+  const article = articles.find(a => a.id === params.id);
+
+  if (!article) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            {lang === 'ar' ? 'المقال غير موجود' : 'Article not found'}
+          </h2>
+          <button
+            onClick={() => navigateTo('/articles')}
+            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            {lang === 'ar' ? 'العودة للمقالات' : 'Back to articles'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Split the content into preview and protected parts
+  const contentParts = article.content[lang].split('\n');
+  const previewContent = contentParts.slice(0, 3).join('\n');
+  const protectedContent = contentParts.slice(3).join('\n');
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'veterinary':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'agriculture':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'science':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    }
+  };
+
+  const BackIcon = lang === 'ar' ? ArrowRight : ArrowLeft;
+  
+  const handleShare = async () => {
+    if (window.navigator.share) {
+      try {
+        await window.navigator.share({
+          title: article.title[lang],
+          text: article.summary[lang],
+          url: window.location.href
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Back Button */}
+      <div className="bg-gray-50 dark:bg-gray-800 py-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <button
+            onClick={() => navigateTo('/articles')}
+            className="inline-flex items-center space-x-2 rtl:space-x-reverse text-blue-600 hover:text-blue-700 transition-colors duration-200"
+          >
+            <BackIcon className="w-5 h-5" />
+            <span>{lang === 'ar' ? 'العودة للمقالات' : 'Back to articles'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Article Content */}
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Category Badge */}
+        <div className="mb-6">
+          <span className={`px-4 py-2 rounded-full text-sm font-medium ${getCategoryColor(article.category)}`}>
+            {t(`category.${article.category}`)}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+          {article.title[lang]}
+        </h1>
+
+        {/* Meta Information */}
+        <div className="flex flex-wrap items-center gap-6 mb-8 text-gray-600 dark:text-gray-400">
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <User className="w-5 h-5" />
+            <span>{t('articles.by')} {article.author[lang]}</span>
+          </div>
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <Calendar className="w-5 h-5" />
+            <span>{formatDate(article.publishDate)}</span>
+          </div>
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <Clock className="w-5 h-5" />
+            <span>{article.readTime} {t('articles.readTime')}</span>
+          </div>
+          <button 
+            className="flex items-center space-x-2 rtl:space-x-reverse text-blue-600 hover:text-blue-700"
+            onClick={() => window.navigator.share && window.navigator.share({
+              title: article.title[lang],
+              text: article.summary[lang],
+              url: window.location.href
+            })}
+          >
+            <Share2 className="w-5 h-5" />
+            <span>{t('articles.share')}</span>
+          </button>
+        </div>
+
+        {/* Main Content */}
+        <div className="prose prose-lg dark:prose-invert max-w-none">
+          <div 
+            dangerouslySetInnerHTML={{ 
+              __html: article.content[lang].split('\n').slice(0, 3).join('\n') 
+            }}
+            className="text-gray-800 dark:text-gray-200 leading-relaxed mb-8"
+          />
+
+          {/* Protected Content */}
+          {!currentUser ? (
+            <div className="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-lg my-8">
+              <div className="flex items-center space-x-3 rtl:space-x-reverse mb-4">
+                <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100">
+                  {lang === 'ar' ? 'محتوى حصري' : 'Exclusive Content'}
+                </h3>
+              </div>
+              <p className="text-blue-800 dark:text-blue-200 mb-4">
+                {lang === 'ar' 
+                  ? 'سجل دخولك أو أنشئ حساباً جديداً لقراءة المقال كاملاً'
+                  : 'Sign in or create an account to read the full article'
+                }
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <button
+                  onClick={() => navigateTo('/login')}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                >
+                  {lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
+                </button>
+                <button
+                  onClick={() => navigateTo('/signup')}
+                  className="px-6 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+                >
+                  {lang === 'ar' ? 'إنشاء حساب' : 'Create Account'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div 
+              dangerouslySetInnerHTML={{ 
+                __html: article.content[lang].split('\n').slice(3).join('\n') 
+              }}
+              className="text-gray-800 dark:text-gray-200 leading-relaxed"
+            />
+          )}
+        </div>
+
+        {/* Author Info */}
+        <div className="mt-12 border-t dark:border-gray-800 pt-8">
+          <div className="flex items-center gap-4">
+            <img
+              src={article.author.avatar || '/default-avatar.jpg'}
+              alt={article.author[lang]}
+              className="w-16 h-16 rounded-full object-cover"
+            />
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {article.author[lang]}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                {article.authorRole?.[lang] || t('articles.contributor')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+            <span>{lang === 'ar' ? 'مشاركة' : 'Share'}</span>
+          </button>
+        </div>
+
+        {/* Featured Image */}
+        <div className="mb-8">
+          <img
+            src={article.image}
+            alt={article.title[lang]}
+            className="w-full h-64 md:h-96 object-cover rounded-xl shadow-lg"
+          />
+        </div>
+
+        {/* Summary */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-6 mb-8">
+          <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+            {article.summary[lang]}
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="prose prose-lg max-w-none dark:prose-invert">
+          <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+            {article.content[lang].split('\n').map((paragraph, index) => (
+              <p key={index} className="mb-6">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+
+        {/* Related Articles Section */}
+        <div className="mt-16 pt-8 border-t dark:border-gray-700">
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            {lang === 'ar' ? 'مقالات ذات صلة' : 'Related Articles'}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {articles
+              .filter(a => a.id !== article.id && a.category === article.category)
+              .slice(0, 2)
+              .map((relatedArticle) => (
+                <div
+                  key={relatedArticle.id}
+                  onClick={() => navigateTo(`/articles/${relatedArticle.id}`)}
+                  className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                >
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    {relatedArticle.title[lang]}
+                  </h4>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
+                    {relatedArticle.summary[lang]}
+                  </p>
+                  <div className="flex items-center mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    <User className="w-4 h-4 mr-2" />
+                    <span>{relatedArticle.author[lang]}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </article>
+    </div>
+  );
+};
+
+export default ArticleDetailPage;

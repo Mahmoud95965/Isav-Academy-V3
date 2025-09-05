@@ -1,0 +1,146 @@
+import React, { useState, useEffect } from 'react';
+import { Menu, X, Moon, Sun, Globe } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { auth } from '../../config/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import UserMenu from '../UI/UserMenu';
+
+const Header: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const { currentLanguage, switchLanguage, t } = useLanguage();
+  const { isDarkMode, toggleDarkMode } = useTheme();
+  const location = useLocation();
+
+  // مراقبة حالة تسجيل الدخول
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLanguageSwitch = () => {
+    switchLanguage(currentLanguage.code === 'ar' ? 'en' : 'ar');
+  };
+
+  const navigation = [
+    { key: 'home', label: t('nav.home'), href: '/' },
+    { key: 'articles', label: t('nav.articles'), href: '/articles' },
+    { 
+      key: 'courses', 
+      label: `${t('nav.courses')} (${t('nav.comingSoon')})`, 
+      href: '/courses' 
+    },
+    { key: 'about', label: t('nav.about'), href: '/about' },
+    { key: 'contact', label: t('nav.contact'), href: '/contact' },
+  ];
+
+  return (
+    <header className="bg-white dark:bg-gray-900 shadow-lg transition-all duration-300 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          {/* Logo */}
+          <Link 
+            to="/"
+            className="flex items-center space-x-2 rtl:space-x-reverse"
+          >
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">Isav</span>
+            </div>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">
+              Isav Academy
+            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8 rtl:space-x-reverse">
+            {navigation.map((item) => (
+              <Link
+                key={item.key}
+                to={item.href}
+                className={`text-base font-medium transition-colors duration-200 ${
+                  location.pathname === item.href
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Settings */}
+          <div className="flex items-center space-x-4 rtl:space-x-reverse">
+            {/* User Menu */}
+            {user && (
+              <UserMenu user={user} />
+            )}
+
+            {/* Language Switch */}
+            <button
+              onClick={handleLanguageSwitch}
+              className="p-2 text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+              aria-label="Switch Language"
+            >
+              <Globe className="w-5 h-5" />
+            </button>
+
+            {/* Theme Switch */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+              aria-label="Toggle Theme"
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+              aria-label="Toggle Menu"
+            >
+              {isMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <nav className="md:hidden py-4">
+            <div className="flex flex-col space-y-4">
+              {navigation.map((item) => (
+                <Link
+                  key={item.key}
+                  to={item.href}
+                  className={`text-base font-medium transition-colors duration-200 ${
+                    location.pathname === item.href
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default Header;

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://isav-academy.netlify.app/sitemap.xml

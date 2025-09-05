@@ -1,0 +1,16 @@
+# النظام
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# ملفات ويندوز خاصة بالمستخدم
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# بيئات التطوير
+.vscode/
+.idea/
+node_modules/
+*.env

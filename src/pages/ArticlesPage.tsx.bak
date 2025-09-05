@@ -1,0 +1,184 @@
+import React, { useState } from 'react';
+import { Search, Filter } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { articles } from '../data/mockData';
+import ArticleCard from '../components/UI/ArticleCard';
+
+const ArticlesPage: React.FC = () => {
+  const { currentLanguage, t } = useLanguage();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'readTime'>('newest');
+  const lang = currentLanguage.code;
+
+  const categories = [
+    { key: 'all', label: lang === 'ar' ? 'جميع المقالات' : 'All Articles' },
+    { key: 'veterinary', label: t('category.veterinary') },
+    { key: 'agriculture', label: t('category.agriculture') },
+    { key: 'science', label: t('category.science') },
+  ];
+
+  const filteredArticles = articles.filter(article => {
+    const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
+    const matchesSearch = searchQuery === '' || 
+      article.title[lang].toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.summary[lang].toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesCategory && matchesSearch;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime();
+      case 'oldest':
+        return new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime();
+      case 'readTime':
+        return a.readTime - b.readTime;
+      default:
+        return 0;
+    }
+  });
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            {t('articles.latest')}
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            {lang === 'ar' ? 
+              'استكشف مجموعتنا الواسعة من المقالات العلمية المتخصصة' :
+              'Explore our extensive collection of specialized scientific articles'
+            }
+          </p>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={lang === 'ar' ? 'ابحث في المقالات...' : 'Search articles...'}
+                className="w-full pl-10 rtl:pr-10 rtl:pl-4 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Category Filter */}
+            <div className="relative min-w-[200px]">
+              <Filter className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="pl-10 rtl:pr-10 rtl:pl-4 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer w-full"
+              >
+                {categories.map((category) => (
+                  <option key={category.key} value={category.key}>
+                    {category.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sort Options */}
+            <div className="relative min-w-[200px]">
+              <div className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 transform -translate-y-1/2 text-gray-400">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                </svg>
+              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'readTime')}
+                className="pl-10 rtl:pr-10 rtl:pl-4 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer w-full"
+              >
+                <option value="newest">{lang === 'ar' ? 'الأحدث' : 'Newest'}</option>
+                <option value="oldest">{lang === 'ar' ? 'الأقدم' : 'Oldest'}</option>
+                <option value="readTime">{lang === 'ar' ? 'وقت القراءة' : 'Reading Time'}</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 rtl:left-0 rtl:right-auto flex items-center px-2 pointer-events-none">
+                <svg className="h-4 w-4 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-gray-600 dark:text-gray-300">
+            {lang === 'ar' ? 
+              `تم العثور على ${filteredArticles.length} مقال` :
+              `Found ${filteredArticles.length} articles`
+            }
+          </p>
+        </div>
+
+        {/* Articles Grid */}
+        {filteredArticles.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredArticles.map((article) => (
+              <ArticleCard key={article.id} article={article} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+              <Search className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              {lang === 'ar' ? 'لم يتم العثور على مقالات' : 'No articles found'}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              {lang === 'ar' 
+                ? 'جرب استخدام كلمات مفتاحية مختلفة أو تصفية أخرى'
+                : 'Try using different keywords or filters'
+              }
+            </p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+              }}
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+            >
+              {lang === 'ar' ? 'إعادة ضبط البحث' : 'Reset search'}
+            </button>
+              {lang === 'ar' ? 'لم يتم العثور على مقالات' : 'No articles found'}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              {lang === 'ar' 
+                ? 'جرب استخدام كلمات مفتاحية مختلفة أو تصفية أخرى'
+                : 'Try using different keywords or filters'
+              }
+            </p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+              }}
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              {lang === 'ar' ? 'إعادة ضبط البحث' : 'Reset search'}
+              {lang === 'ar' ? 'لا توجد مقالات' : 'No articles found'}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              {lang === 'ar' ? 
+                'جرب تغيير معايير البحث أو الفلترة' :
+                'Try changing your search criteria or filters'
+              }
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ArticlesPage;
