@@ -6,24 +6,24 @@ export const teamMembers: TeamMember[] = [
   {
     id: '1',
     name: {
-      ar: 'د. محمد السيد',
-      en: 'Dr. Mohamed El-Sayed'
+      ar: 'م.محمد طه',
+      en: 'Eng.mohammed Taha'
     },
     position: {
-      ar: 'مدير الأكاديمية - أستاذ الطب البيطري',
-      en: 'Academy Director - Professor of Veterinary Medicine'
+      ar: 'مدير الأكاديمية',
+      en: 'Academy Director'
     },
     image: '/images/1.jpg',
     bio: {
-      ar: 'خبرة 20 عاماً في الطب البيطري والبحث العلمي، حاصل على دكتوراه في الجراحة البيطرية',
-      en: '20 years of experience in veterinary medicine and scientific research, PhD in Veterinary Surgery'
+      ar: '.',
+      en: '.'
     }
   },
   {
     id: '2',
     name: {
-      ar: 'د. أحمد محمود',
-      en: 'Dr. Ahmed Mahmoud'
+      ar: 'م.مؤمن سيد',
+      en: 'Eng.Mohammed taha'
     },
     position: {
       ar: 'نائب المدير للشؤون الأكاديمية',
@@ -31,8 +31,8 @@ export const teamMembers: TeamMember[] = [
     },
     image: '/images/2.jpg',
     bio: {
-      ar: 'أستاذ مساعد في العلوم الزراعية، متخصص في التقنيات الزراعية الحديثة',
-      en: 'Associate Professor in Agricultural Sciences, specialist in modern agricultural technologies'
+      ar: '.',
+      en: '.'
     }
   },
 ];
